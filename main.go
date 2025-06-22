@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"image/png"
 	"log"
+	"runtime"
 	"time"
 
 	_ "embed"
@@ -21,8 +22,17 @@ var iconBytes []byte
 //go:embed digital-7.ttf
 var fontBytes []byte
 
+func loadConfig() {
+	switch runtime.GOOS {
+	case "darwin":
+		fontSize = 24
+	}
+}
+
 func main() {
 	go newTicker()
+
+	loadConfig()
 
 	icon, err := loadIcon()
 	if err != nil {
@@ -66,7 +76,7 @@ func mainLoop() {
 			),
 			g.Row(g.Style().
 				SetFont(fontInfo).
-				SetFontSize(24).To(g.Label(text)),
+				SetFontSize(float32(fontSize)).To(g.Label(text)),
 			),
 		),
 	)
@@ -123,4 +133,5 @@ var (
 	text     string
 	fontInfo *g.FontInfo
 	wnd      *g.MasterWindow
+	fontSize = 60
 )
