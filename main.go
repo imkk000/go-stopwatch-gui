@@ -1,22 +1,30 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"log"
-	"os"
 	"time"
+
+	_ "embed"
 
 	"github.com/AllenDang/cimgui-go/imgui"
 	g "github.com/AllenDang/giu"
 )
 
+//go:embed icon.png
+var iconBytes []byte
+
+//go:embed digital-7.ttf
+var fontBytes []byte
+
 func main() {
 	go newTicker()
 
-	icon, err := loadIcon(iconName)
+	icon, err := loadIcon()
 	if err != nil {
 		log.Fatal("cannot load icon:", err)
 		return
@@ -24,11 +32,10 @@ func main() {
 
 	flags := g.MasterWindowFlagsFrameless | g.MasterWindowFlagsNotResizable | g.MasterWindowFlagsFloating | g.MasterWindowFlagsTransparent
 	wnd = g.NewMasterWindow(title, winWidth, winHeight, flags)
-	wnd.SetPos(0, 0)
 	wnd.SetIcon(icon)
 	wnd.SetBgColor(color.RGBA{0, 0, 0, 0})
 	wnd.SetStyle(g.Style().SetColor(g.StyleColorText, color.RGBA{169, 169, 169, 255}))
-	fontInfo = g.Context.FontAtlas.AddFont(fontName, 12)
+	fontInfo = g.Context.FontAtlas.AddFontFromBytes(fontName, fontBytes, 12)
 
 	wnd.Run(mainLoop)
 }
@@ -53,15 +60,13 @@ func mainLoop() {
 			}),
 			g.Row(
 				g.Button("30s").OnClick(reset(30*time.Second)),
-				g.Button("1m").OnClick(reset(time.Minute)),
-				g.Button("5m").OnClick(reset(5*time.Minute)),
 				g.Button("15m").OnClick(reset(15*time.Minute)),
 				g.Button("30m").OnClick(reset(30*time.Minute)),
 				g.Button("1h").OnClick(reset(time.Hour)),
 			),
 			g.Row(g.Style().
 				SetFont(fontInfo).
-				SetFontSize(60).To(g.Label(text)),
+				SetFontSize(24).To(g.Label(text)),
 			),
 		),
 	)
@@ -96,14 +101,8 @@ func reset(d time.Duration) func() {
 	}
 }
 
-func loadIcon(filename string) (image.Image, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	img, err := png.Decode(file)
+func loadIcon() (image.Image, error) {
+	img, err := png.Decode(bytes.NewReader(iconBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +114,6 @@ const (
 	winWidth  = 260
 	winHeight = 140
 	title     = "Stopwatch"
-	iconName  = "icon.png"
 	fontName  = "digital-7.ttf"
 )
 
